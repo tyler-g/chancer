@@ -113,8 +113,6 @@
 
                 case "vol":
                     if (typeof(val) === 'undefined') return false; //need value for volume command
-                    //convert units
-                    val = val / 100;
                     return soundInstance[id].setVolume(val); //returns true [success] or false [failed]
 
                 case "pan":
