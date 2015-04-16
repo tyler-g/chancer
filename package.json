@@ -1,0 +1,15 @@
+{
+  "name": "Chancer",
+  "version": "0.0.1",
+  "author": "Tyler G <mail@tyler-g.com>",
+  "description": "a project exploring the creation of chance music via user commands",
+  "engine": "node >= 0.4.1",
+  "dependencies": {
+    "busboy": "^0.2.9",
+    "cli-color": "^0.3.3",
+    "es6-symbol": "^2.0.1",
+    "express": "^4.12.3",
+    "node-uuid": "^1.4.3",
+    "socket.io": "^0.9.16"
+  }
+}
