@@ -1,0 +1,125 @@
+<html>
+<head>
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<link href='http://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
+
+<style>
+
+body {
+    font-family: 'Poiret One', cursive;
+    margin: 75px;
+}
+
+h2 {
+    font-size: 50px;
+    text-align: center;
+}
+
+#settings {
+    position: fixed;
+    top: 75px;
+    right: 75px;
+}
+#settings a {
+    color
+}
+#chatbox {
+    padding: 30px 10px;
+    width: 300px;
+}
+#incomingChatMessages {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#incomingChatMessages li {
+    padding: 4px;
+}
+
+#incomingChatMessages li:nth-child(odd) {
+    background-color: #ccc;
+}
+
+#incomingChatMessages li:nth-child(even) {
+    background-color: #eee;
+}
+
+#outgoingChatMessage {
+    margin-top: 30px;
+}
+
+form.upload {
+    display: none;
+}
+
+</style>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="js/socket.io.min.js"></script>
+    <script>
+        var SERVER = "http://localhost:8000"
+        $(function(){
+
+
+            var socket = io.connect(SERVER);
+            var lastmsg;
+            var $outgoing = $('#outgoingChatMessage');
+
+            socket.on('message', showIncomingMessage);
+
+            $outgoing.keydown(function(event) {
+                if(event.which == 38) {
+                    //up arrow
+                    $outgoing.val(lastmsg);
+                    $outgoing.selectRange(4);
+                }
+                if(event.which == 13) {
+                    //enter
+                    event.preventDefault();
+                    var msg = $('#outgoingChatMessage').val();
+                    lastmsg = msg;
+                    console.log("sending " + msg);
+                    socket.emit('message',msg);
+                    $('#outgoingChatMessage').val('');
+                }
+            });
+
+            function showIncomingMessage(msg){
+                console.log(msg);
+                //$('#incomingChatMessages').append($('<li></li>')).text(msg);
+                $('#incomingChatMessages').append('<li>' + msg + '</li>');
+            }
+
+            $('form.upload').submit(function(e) {
+                var $this = $(this);
+                e.preventDefault();
+                var postUrl = $this.attr('action');
+                $.post(postUrl, function(res) {
+                    console.log(res);
+                })
+            });
+
+        });
+    </script>
+
+</head>
+<body>
+    <h2> Chancer </h2>
+    <form action="http://localhost:8002/upload?key=12345" method="post" enctype="multipart/form-data" class="upload">
+        <input type="file" name="image" />
+        <input type="submit" value="Upload" />
+    </form>
+    <div id="settings">
+        <a href="#">
+            <i class="fa fa-2x fa-cog"></i>
+        </a>
+    </div>
+    <div id="chatbox">
+        <h3>what's happn'n</h3>
+        <ul id="incomingChatMessages"></ul>
+        <input type="text" id="outgoingChatMessage">
+    </div>
+</body>
+</html>
