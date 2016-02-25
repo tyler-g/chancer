@@ -15,18 +15,29 @@ h2 {
     font-size: 50px;
     text-align: center;
 }
-
+h3 {
+    text-align: center;
+}
 #settings {
     position: fixed;
     top: 75px;
     right: 75px;
 }
 #settings a {
-    color
+    color: black;
 }
 #chatbox {
     padding: 30px 10px;
-    width: 300px;
+}
+#chatbox input {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+}
+#help ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 #incomingChatMessages {
     margin: 0;
@@ -57,17 +68,18 @@ form.upload {
 </style>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
     <script src="js/socket.io.min.js"></script>
+
     <script>
-        var SERVER = "http://localhost:8000"
+        var SERVER = "http://localhost";
+        var NICK = "mrduck";
         $(function(){
-
-
-            var socket = io.connect(SERVER);
+            var socket;
+            var SERVER;
             var lastmsg;
             var $outgoing = $('#outgoingChatMessage');
-
-            socket.on('message', showIncomingMessage);
+            var $gear = $('.config-server');
 
             $outgoing.keydown(function(event) {
                 if(event.which == 38) {
@@ -92,6 +104,36 @@ form.upload {
                 $('#incomingChatMessages').append('<li>' + msg + '</li>');
             }
 
+            function chooseNewNick(name){
+                NICK = prompt("Nickname Taken", "Please choose another nick. " + name + ' is taken!');
+                //send new nickname to server
+                socket.emit('nick', NICK);
+            }
+
+            function bindEvents(){
+                socket = io.connect(SERVER);
+                socket.on('connection', function(){
+                    console.log('connected to server');
+                    $gear.css('color','green');
+                    var name = 'mr duck';
+                    //send nickname to server
+                    socket.emit('nick', name);
+                });
+                socket.on('disconnect', function() {
+                    console.log('disconnected from server');
+                    $gear.css('color','black');
+                })
+                socket.on('message', showIncomingMessage);
+
+                socket.on('nickTaken', chooseNewNick);
+            }
+            $('.config-server').on('click', function(e) {
+                console.log('config');
+                e.preventDefault();
+                SERVER = prompt("Server IP", "http://localhost") + ":8000";
+                bindEvents(); 
+            });
+
             $('form.upload').submit(function(e) {
                 var $this = $(this);
                 e.preventDefault();
@@ -112,14 +154,24 @@ form.upload {
         <input type="submit" value="Upload" />
     </form>
     <div id="settings">
-        <a href="#">
+        <a class="config-server" href="#">
             <i class="fa fa-2x fa-cog"></i>
         </a>
     </div>
     <div id="chatbox">
-        <h3>what's happn'n</h3>
+        <h3>log</h3>
         <ul id="incomingChatMessages"></ul>
         <input type="text" id="outgoingChatMessage">
+    </div>
+    <div id="help">
+        <ul>
+            <li>x denotes number of sound to control (1-10)</li>
+            <li>/play x</li>
+            <li>/stop x</li>
+            <li>/loop x y [y denotes how many times to loop. If not provided, loop indefinitely</li>
+            <li>/vol x y [changes volume of sound x to y. y can be 0 to 100, with 100 being 100% volume</li>
+            <li>/pan x y [changes panning of sound x to y. y can be -100 to 100, with -100 being far left, and 100 being far right</li>
+        </ul>
     </div>
 </body>
 </html>

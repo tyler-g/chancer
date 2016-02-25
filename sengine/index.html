@@ -67,13 +67,7 @@
             });
         }
 
-        function soundLoaded(event) {
-            soundInstance[event.id] = createjs.Sound.createInstance(event.id);
-            //console.log(soundInstance);
-            //master = event.target.play(event.id, createjs.Sound.INTERRUPT_NONE, 0, 0, false, 1);
-
-            if (event.id < manifest.length-1) return;
-
+        function startServer() {
             //all sound loaded, now we can start listening for commands
             var SERVER = "http://localhost:8001"
             var socket = io.connect(SERVER);
@@ -84,7 +78,16 @@
                 console.log(data);
                 socket.emit("message", {type:'success', msg:'got command'});
                 soundDo(data["cmd"], data["id"], data["val"]);
-            });    
+            });  
+        }
+
+        function soundLoaded(event) {
+            soundInstance[event.id] = createjs.Sound.createInstance(event.id);
+            //console.log(soundInstance);
+            //master = event.target.play(event.id, createjs.Sound.INTERRUPT_NONE, 0, 0, false, 1);
+            if (event.id < manifest.length-1) return;
+
+            startServer();
         }
 
         function soundDo(cmd,id,val) {

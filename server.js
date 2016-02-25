@@ -12,6 +12,12 @@ var uuid = require('node-uuid');
 var fs = require('fs');
 var Busboy = require('busboy'); //for file upload server
 
+
+
+//app.get('/', function(req,res) {
+    app.use(express.static('sengine'));
+//})
+
 //server for clients
 var server = http.createServer(app).listen(8000, function() {
     console.log(clc.whiteBright.bgCyan("client message server listening on port 8000..."));
@@ -61,6 +67,10 @@ global.VALID_COMMANDS = {
     pan     : true
 }
 
+//nickname tracking
+var nicksDirMap = {}; //hash table
+var nicksTaken = {};
+
 //sound engine communication
 iose.sockets.on('connection', function (client) {
     console.log(clc.whiteBright.bgBlack("sound engine connected"));
@@ -74,7 +84,6 @@ iose.sockets.on('connection', function (client) {
 
     client.on('message', function(data) {
     //when the sound engine sends a message to here
-        console.log(data);
         console.log("got a message from sound engine!");
     });
 });
@@ -82,7 +91,25 @@ iose.sockets.on('connection', function (client) {
 
 //client communication
 io.sockets.on('connection', function (client) {
+    client.emit('connection');
 
+    //nickname events
+    client.on('nick', function(name){
+        console.log('nick event', name);
+
+        //is the nick available?
+        if (!nicksTaken[name]) {
+            nicksTaken[name] = true;
+            nicksDirMap[client.id] = name;
+        }
+        else {
+            //not available, let client know
+            client.emit('nickTaken', name);
+        }
+        console.log(nicksDirMap);
+    });
+
+    //message events
     client.on('message', function(msg) {
     //when any chat client sends a message to here
 
@@ -95,25 +122,26 @@ io.sockets.on('connection', function (client) {
 
         //parse out the message to see if its valid
         var result = f.cmdCheck(msg);
-        console.log(result);
 
         if (typeof(result) !== 'boolean') {
             //only continue if command was valid
-            console.log(soundEngine);
+
             //send command to sound engine. Ideally should have a callback
             soundEngine.emit('command', { 
                 cmd: result['cmd'],
                 id: result['id'],
                 val: result['val']
             });
-
             console.log("broadcasting " + msg);
             client.emit('message', msg);
+            client.broadcast.send(msg);
         }
     });
     client.on('disconnect', function(client){
         console.log("client disconnected");
         updateNumClients(false);
+         nicksTaken[nicksDirMap[client.id]] = false;
+         nicksDirMap[client.id] = null;
     });
 
     updateNumClients(true);
