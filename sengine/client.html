@@ -5,66 +5,64 @@
 <link href='http://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
 
 <style>
+    body {
+        font-family: 'Poiret One', cursive;
+        margin: 75px;
+    }
 
-body {
-    font-family: 'Poiret One', cursive;
-    margin: 75px;
-}
+    h2 {
+        font-size: 50px;
+        text-align: center;
+    }
+    h3 {
+        text-align: center;
+    }
+    #settings {
+        position: fixed;
+        top: 75px;
+        right: 75px;
+    }
+    #settings a {
+        color: black;
+    }
+    #chatbox {
+        padding: 30px 10px;
+    }
+    #chatbox input {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+    }
+    #help ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    #incomingChatMessages {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
 
-h2 {
-    font-size: 50px;
-    text-align: center;
-}
-h3 {
-    text-align: center;
-}
-#settings {
-    position: fixed;
-    top: 75px;
-    right: 75px;
-}
-#settings a {
-    color: black;
-}
-#chatbox {
-    padding: 30px 10px;
-}
-#chatbox input {
-    width: 100%;
-    padding: 15px;
-    font-size: 16px;
-}
-#help ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-#incomingChatMessages {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
+    #incomingChatMessages li {
+        padding: 4px;
+    }
 
-#incomingChatMessages li {
-    padding: 4px;
-}
+    #incomingChatMessages li:nth-child(odd) {
+        background-color: #ccc;
+    }
 
-#incomingChatMessages li:nth-child(odd) {
-    background-color: #ccc;
-}
+    #incomingChatMessages li:nth-child(even) {
+        background-color: #eee;
+    }
 
-#incomingChatMessages li:nth-child(even) {
-    background-color: #eee;
-}
+    #outgoingChatMessage {
+        margin-top: 30px;
+    }
 
-#outgoingChatMessage {
-    margin-top: 30px;
-}
-
-form.upload {
-    display: none;
-}
-
+    form.upload {
+        display: none;
+    }
 </style>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
@@ -72,78 +70,98 @@ form.upload {
     <script src="js/socket.io.min.js"></script>
 
     <script>
-        var SERVER = "http://localhost";
-        var NICK = "mrduck";
-        $(function(){
-            var socket;
-            var SERVER;
-            var lastmsg;
-            var $outgoing = $('#outgoingChatMessage');
-            var $gear = $('.config-server');
+        (function() {
+            var SERVER = "http://localhost";
+            var NICK = "mrduck";
 
-            $outgoing.keydown(function(event) {
-                if(event.which == 38) {
-                    //up arrow
-                    $outgoing.val(lastmsg);
-                    $outgoing.selectRange(4);
-                }
-                if(event.which == 13) {
-                    //enter
-                    event.preventDefault();
-                    var msg = $('#outgoingChatMessage').val();
-                    lastmsg = msg;
-                    console.log("sending " + msg);
-                    socket.emit('message',msg);
-                    $('#outgoingChatMessage').val('');
-                }
-            });
+            $(function(){
 
-            function showIncomingMessage(msg){
-                console.log(msg);
-                //$('#incomingChatMessages').append($('<li></li>')).text(msg);
-                $('#incomingChatMessages').append('<li>' + msg + '</li>');
-            }
+                var socket;
+                var lastmsg;
+                var $outgoing = $('#outgoingChatMessage');
+                var $gear = $('.config-server');
 
-            function chooseNewNick(name){
-                NICK = prompt("Nickname Taken", "Please choose another nick. " + name + ' is taken!');
-                //send new nickname to server
-                socket.emit('nick', NICK);
-            }
+                var recentCommands = [];
+                var recentCommandOffset = 0;
 
-            function bindEvents(){
-                socket = io.connect(SERVER);
-                socket.on('connection', function(){
-                    console.log('connected to server');
-                    $gear.css('color','green');
-                    var name = 'mr duck';
-                    //send nickname to server
-                    socket.emit('nick', name);
+                $outgoing.keydown(function(event) {
+                    if(event.which == 38) {
+                        //up arrow
+
+                        if (recentCommandOffset > recentCommands.length - 1) {
+                            return false;
+                        }
+
+                        if (recentCommands.length) {
+                            $outgoing.val(recentCommands[recentCommands.length - 1 - recentCommandOffset]);
+                            recentCommandOffset++;
+                        }
+
+                        //$outgoing.focus().val($outgoing.val()); //force cursor to be at end of text input (may not be needed)
+                        return false;
+
+                    }
+                    if(event.which == 13) {
+                        //enter
+                        event.preventDefault();
+                        var msg = $('#outgoingChatMessage').val();
+                        lastmsg = msg;
+                        recentCommands.push(lastmsg);
+                        recentCommandOffset = 0;
+
+                        console.log("sending " + msg);
+                        socket.emit('message',msg);
+                        $('#outgoingChatMessage').val('');
+                    }
                 });
-                socket.on('disconnect', function() {
-                    console.log('disconnected from server');
-                    $gear.css('color','black');
-                })
-                socket.on('message', showIncomingMessage);
 
-                socket.on('nickTaken', chooseNewNick);
-            }
-            $('.config-server').on('click', function(e) {
-                console.log('config');
-                e.preventDefault();
-                SERVER = prompt("Server IP", "http://localhost") + ":8000";
-                bindEvents(); 
+                function showIncomingMessage(msg){
+                    console.log(msg);
+                    //$('#incomingChatMessages').append($('<li></li>')).text(msg);
+                    $('#incomingChatMessages').append('<li>' + msg + '</li>');
+                }
+
+                function chooseNewNick(name){
+                    NICK = prompt("Nickname Taken", "Please choose another nick. " + name + ' is taken!');
+                    //send new nickname to server
+                    socket.emit('nick', NICK);
+                }
+
+                function bindEvents(){
+                    socket = io.connect(SERVER);
+                    socket.on('connection', function(){
+                        console.log('connected to server');
+                        $gear.css('color','green');
+                        var name = 'mr duck';
+                        //send nickname to server
+                        socket.emit('nick', name);
+                    });
+                    socket.on('disconnect', function() {
+                        console.log('disconnected from server');
+                        $gear.css('color','black');
+                    })
+                    socket.on('message', showIncomingMessage);
+
+                    socket.on('nickTaken', chooseNewNick);
+                }
+                $('.config-server').on('click', function(e) {
+                    console.log('config');
+                    e.preventDefault();
+                    SERVER = prompt("Server IP", "http://localhost") + ":8000";
+                    bindEvents(); 
+                });
+
+                $('form.upload').submit(function(e) {
+                    var $this = $(this);
+                    e.preventDefault();
+                    var postUrl = $this.attr('action');
+                    $.post(postUrl, function(res) {
+                        console.log(res);
+                    })
+                });
+
             });
-
-            $('form.upload').submit(function(e) {
-                var $this = $(this);
-                e.preventDefault();
-                var postUrl = $this.attr('action');
-                $.post(postUrl, function(res) {
-                    console.log(res);
-                })
-            });
-
-        });
+        }());
     </script>
 
 </head>
@@ -161,7 +179,7 @@ form.upload {
     <div id="chatbox">
         <h3>log</h3>
         <ul id="incomingChatMessages"></ul>
-        <input type="text" id="outgoingChatMessage">
+        <input type="text" id="outgoingChatMessage" onfocus="this.value = this.value;">
     </div>
     <div id="help">
         <ul>
