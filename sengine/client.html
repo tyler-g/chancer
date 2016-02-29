@@ -126,20 +126,24 @@
                 $outgoing.keydown(function(event) {
                     if(event.which == 38) {
                         //up arrow
-
-                        if (recentCommandOffset > recentCommands.length - 1) {
-                            return false;
-                        }
-
+                        if (recentCommandOffset > recentCommands.length - 1) return false;
                         if (recentCommands.length) {
                             $outgoing.val(recentCommands[recentCommands.length - 1 - recentCommandOffset]);
                             recentCommandOffset++;
                         }
-
                         //$outgoing.focus().val($outgoing.val()); //force cursor to be at end of text input (may not be needed)
                         return false;
                     }
-                    if(event.which == 13) {
+                    else if (event.which == 40) {
+                        //down arrow
+                        if (recentCommandOffset < 1) return false;
+                        if (recentCommands.length) {
+                            $outgoing.val(recentCommands[recentCommands.length - recentCommandOffset + 1]);
+                            recentCommandOffset--;
+                        }
+                        return false;
+                    }
+                    else if(event.which == 13) {
                         //enter
                         event.preventDefault();
 
