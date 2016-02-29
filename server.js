@@ -57,6 +57,7 @@ var iose = require('socket.io').listen(sese);
 //vars
 var clientCount = 0;
 var soundEngine; //this will hold the reference to the sound engine. Need to define here so it has proper scope.
+var soundEngineManifestLength = 0;
 
 global.VALID_COMMANDS = {
     play    : true,
@@ -77,15 +78,20 @@ iose.sockets.on('connection', function (client) {
     console.log(clc.whiteBright.bgBlack("sound engine socket id: " + client.id));
     soundEngine = client;
 
-    client.on('disconnect', function (client) {
+    soundEngine.on('disconnect', function (client) {
         console.log("sound engine disconnected");
         soundEngine = undefined;
     });
 
-    client.on('message', function(data) {
+    soundEngine.on('message', function(data) {
     //when the sound engine sends a message to here
-        console.log("got a message from sound engine!");
+        console.log("SENGINE says: " + data.msg);
     });
+
+    soundEngine.on('manifestUpdate', function(data) {
+        console.log("SENGINE says manifest length = " + data);
+        soundEngineManifestLength = data;
+    })
 });
 
 
@@ -111,7 +117,7 @@ io.sockets.on('connection', function (client) {
 
     //message events
     client.on('message', function(msg) {
-    //when any chat client sends a message to here
+        //when any chat client sends a message to here
 
         if (typeof(soundEngine) === 'undefined') {
             //sound engine is not connected. Let user know.
@@ -124,17 +130,32 @@ io.sockets.on('connection', function (client) {
         var result = f.cmdCheck(msg);
 
         if (typeof(result) !== 'boolean') {
-            //only continue if command was valid
+        //only continue if command was valid
+
+            //only continue if sound id is valid
+            if (result['id'] > soundEngineManifestLength - 1) {
+                client.emit('message', "Server received your command, but the sound id is invalid");
+                return false;
+            }
 
             //send command to sound engine. Ideally should have a callback
-            soundEngine.emit('command', { 
-                cmd: result['cmd'],
-                id: result['id'],
-                val: result['val']
-            });
-            console.log("broadcasting " + msg);
-            client.emit('message', msg);
-            client.broadcast.send(msg);
+            soundEngine.emit(
+                'command', 
+                { 
+                    cmd: result['cmd'],
+                    id: result['id'],
+                    val: result['val']
+                },
+                function(result){
+                    //callback
+                   if (result) {
+                        //if sound played successfully, let the world know it happened
+                        console.log("broadcasting " + msg);
+                        client.emit('message', msg);
+                        client.broadcast.send(msg);      
+                    }              
+                }
+            );
         }
     });
     client.on('disconnect', function(client){

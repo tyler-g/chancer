@@ -22,7 +22,6 @@
 
     <script>
     	var debug = true;
-        var src;            // the audio src we are trying to play
         var soundInstance = [];  //master array of SoundInstance objects
         var manifest; //master array of source wav files and their ids
 
@@ -31,8 +30,6 @@
         }
 
         function init() {
-            // store the DOM element so we do not have to keep looking it up
-            displayStatus = document.getElementById("status");
 
             var assetsPath = "wav/";
 
@@ -69,29 +66,38 @@
 
         function startServer() {
             //all sound loaded, now we can start listening for commands
-            var SERVER = "http://localhost:8001"
+            var PORT = 8001;
+            var SERVER = "http://localhost:" + PORT;
             var socket = io.connect(SERVER);
             socket.on('connect', function () {
                 console.log('connected');
+                //send manifest length to the server
+                socket.emit("manifestUpdate", soundInstance.length);
             });   
-            socket.on('command', function(data) {
-                console.log(data);
-                socket.emit("message", {type:'success', msg:'got command'});
-                soundDo(data["cmd"], data["id"], data["val"]);
-            });  
+            socket.on('command', function(data, cb) {
+                console.log(data);       
+                if (soundDo(data["cmd"], data["id"], data["val"]) === false) {
+                    //if it returned false, it failed. Let server know
+                    socket.emit("message", {type:'error', msg:'got command but it failed'});
+                    cb(false);
+                } 
+                else {
+                    //it succeeded
+                    socket.emit("message", {type:'success', msg:'got command and it succeeded'});
+                    cb(true);
+                }     
+            });
+
         }
 
         function soundLoaded(event) {
             soundInstance[event.id] = createjs.Sound.createInstance(event.id);
-            //console.log(soundInstance);
             //master = event.target.play(event.id, createjs.Sound.INTERRUPT_NONE, 0, 0, false, 1);
             if (event.id < manifest.length-1) return;
-
             startServer();
         }
 
-        function soundDo(cmd,id,val) {
-
+        function soundDo(cmd, id, val) {
             if (typeof(cmd) === 'undefined' || typeof(id) === 'undefined') return false; //only val is optional
 
             switch (cmd) {

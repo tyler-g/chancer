@@ -1,4 +1,6 @@
 var Global = {
-    VALID_COMMANDS : { }
+    VALID_COMMANDS : { 
+
+    }
 };    
 module.exports = Global;

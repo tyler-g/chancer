@@ -25,6 +25,13 @@
     #settings a {
         color: black;
     }
+    #settings a.shake i,
+    .shake {
+        animation: shake 0.72s cubic-bezier(.36,.07,.19,.97) both;
+        transform: translate3d(0, 0, 0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
     #chatbox {
         padding: 30px 10px;
     }
@@ -63,6 +70,26 @@
     form.upload {
         display: none;
     }
+
+
+    @keyframes shake {
+      10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+      }
+      
+      20%, 80% {
+        transform: translate3d(2px, 0, 0);
+      }
+
+      30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+      }
+
+      40%, 60% {
+        transform: translate3d(4px, 0, 0);
+      }
+    }
+
 </style>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
@@ -72,7 +99,9 @@
     <script>
         (function() {
             var SERVER = "http://localhost";
+            var PORT = 8000;
             var NICK = "mrduck";
+            var CONNECTED = false;
 
             $(function(){
 
@@ -83,6 +112,16 @@
 
                 var recentCommands = [];
                 var recentCommandOffset = 0;
+
+                function shake($el) {
+                    if (!$el instanceof jQuery) {
+                        $el = $(el);
+                    }
+                    $el.addClass('shake');
+                    setTimeout(function(){
+                        $el.removeClass('shake');
+                    }, 800);
+                }
 
                 $outgoing.keydown(function(event) {
                     if(event.which == 38) {
@@ -99,12 +138,23 @@
 
                         //$outgoing.focus().val($outgoing.val()); //force cursor to be at end of text input (may not be needed)
                         return false;
-
                     }
                     if(event.which == 13) {
                         //enter
                         event.preventDefault();
+
+                        if (!CONNECTED) {
+                            shake($gear);
+                            return;
+                        }
+
                         var msg = $('#outgoingChatMessage').val();
+
+                        if (msg === "") {
+                            shake($outgoing);
+                            return;
+                        }
+
                         lastmsg = msg;
                         recentCommands.push(lastmsg);
                         recentCommandOffset = 0;
@@ -115,23 +165,29 @@
                     }
                 });
 
-                function showIncomingMessage(msg){
+                function showIncomingMessage(msg) {
                     console.log(msg);
                     //$('#incomingChatMessages').append($('<li></li>')).text(msg);
                     $('#incomingChatMessages').append('<li>' + msg + '</li>');
                 }
 
-                function chooseNewNick(name){
+                function chooseNewNick(name) {
                     NICK = prompt("Nickname Taken", "Please choose another nick. " + name + ' is taken!');
                     //send new nickname to server
                     socket.emit('nick', NICK);
                 }
 
+                function promptServerConfig() {
+                    SERVER = prompt("Server IP", "http://localhost") + ":" + PORT;
+                    bindEvents(); 
+                }
+
                 function bindEvents(){
                     socket = io.connect(SERVER);
-                    socket.on('connection', function(){
+                    socket.on('connection', function() {
                         console.log('connected to server');
                         $gear.css('color','green');
+                        CONNECTED = true;
                         var name = 'mr duck';
                         //send nickname to server
                         socket.emit('nick', name);
@@ -139,16 +195,16 @@
                     socket.on('disconnect', function() {
                         console.log('disconnected from server');
                         $gear.css('color','black');
+                        CONNECTED = false;
                     })
                     socket.on('message', showIncomingMessage);
-
                     socket.on('nickTaken', chooseNewNick);
                 }
+
                 $('.config-server').on('click', function(e) {
                     console.log('config');
                     e.preventDefault();
-                    SERVER = prompt("Server IP", "http://localhost") + ":8000";
-                    bindEvents(); 
+                    promptServerConfig();
                 });
 
                 $('form.upload').submit(function(e) {
@@ -160,6 +216,8 @@
                     })
                 });
 
+                //init
+                shake($gear);
             });
         }());
     </script>
