@@ -101,8 +101,6 @@ io.sockets.on('connection', function (client) {
 
     //nickname events
     client.on('nick', function(name){
-        console.log('nick event', name);
-
         //is the nick available?
         if (!nicksTaken[name]) {
             nicksTaken[name] = true;
@@ -158,11 +156,11 @@ io.sockets.on('connection', function (client) {
             );
         }
     });
-    client.on('disconnect', function(client){
-        console.log("client disconnected");
-        updateNumClients(false);
+    client.on('disconnect', function(){
+        console.log("client " + client.id + " disconnected");
          nicksTaken[nicksDirMap[client.id]] = false;
          nicksDirMap[client.id] = null;
+         updateNumClients(false);
     });
 
     updateNumClients(true);
@@ -181,4 +179,5 @@ function updateNumClients(connected) {
         clientCount --;
     }
     console.log (clc.whiteBright.bgCyan("chat client count: " + clientCount));
+    console.log(nicksDirMap);
 };
