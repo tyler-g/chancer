@@ -17,6 +17,13 @@
     h3 {
         text-align: center;
     }
+    h2.title {
+        margin-bottom: 10px;
+    }
+    h3.sub {
+        margin-top: 0;
+    }
+
     #settings {
         position: fixed;
         top: 75px;
@@ -64,7 +71,7 @@
     }
 
     #outgoingChatMessage {
-        margin-top: 30px;
+        margin-top: 10px;
     }
 
     form.upload {
@@ -228,11 +235,12 @@
 
 </head>
 <body>
-    <h2> Chancer </h2>
+    <h2 class="title">Chancer</h2>
     <form action="http://localhost:8002/upload?key=12345" method="post" enctype="multipart/form-data" class="upload">
         <input type="file" name="image" />
         <input type="submit" value="Upload" />
     </form>
+    <h3 class="sub">new york</h3>
     <div id="settings">
         <a class="config-server" href="#">
             <i class="fa fa-2x fa-cog"></i>

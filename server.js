@@ -120,7 +120,7 @@ io.sockets.on('connection', function (client) {
         if (typeof(soundEngine) === 'undefined') {
             //sound engine is not connected. Let user know.
             console.log("command received from client, but sEngine is not connected");
-            client.emit('message', "Server received your command, but the sound engine is not connected");
+            client.emit('message', "Server received your command [" + msg + "] , but the sound engine is not connected");
             return false;
         }
 
@@ -131,12 +131,16 @@ io.sockets.on('connection', function (client) {
         //only continue if command was valid
 
             //only continue if sound id is valid
+            if (result['id'] < 0) {
+                client.emit('message', "Server received your command [" + msg + "] , but the sound id is invalid (must be positive number)");
+                return false;                
+            }
             if (result['id'] > soundEngineManifestLength - 1) {
-                client.emit('message', "Server received your command, but the sound id is invalid");
+                client.emit('message', "Server received your command [" + msg + "] , but the sound id is invalid");
                 return false;
             }
 
-            //send command to sound engine. Ideally should have a callback
+            //send command to sound engine
             soundEngine.emit(
                 'command', 
                 { 
