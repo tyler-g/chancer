@@ -95,7 +95,6 @@ io.sockets.on('connection', function (client) {
 
         if (typeof(result) !== 'boolean') {
         //only continue if command was valid
-            console.log(result);
             //only continue if sound id is valid
             if (result['id'] < 0) {
                 var data = {
@@ -106,7 +105,7 @@ io.sockets.on('connection', function (client) {
             }
             if (result['id'] > soundEngineManifestLength - 1) {
                 var data = {
-                    'msg' : 'Server received your command [" + msg + "] , but the sound id is invalid'
+                    'msg' : 'Server received your command [' + msg + '] , but the sound id is invalid'
                 }
                 client.emit('cmdReceived', data, true);
                 return false;

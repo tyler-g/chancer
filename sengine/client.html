@@ -1,0 +1,274 @@
+<html>
+<head>
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<link href='http://fonts.googleapis.com/css?family=Poiret+One' rel='stylesheet' type='text/css'>
+
+<style>
+    body {
+        font-family: 'Poiret One', cursive;
+        margin: 75px;
+    }
+
+    h2 {
+        font-size: 50px;
+        text-align: center;
+    }
+    h3 {
+        text-align: center;
+    }
+    h2.title {
+        margin-bottom: 10px;
+    }
+    h3.sub {
+        margin-top: 0;
+    }
+
+    #settings {
+        position: fixed;
+        top: 75px;
+        right: 75px;
+    }
+    #settings a {
+        color: black;
+    }
+    #settings a.shake i,
+    .shake {
+        animation: shake 0.72s cubic-bezier(.36,.07,.19,.97) both;
+        transform: translate3d(0, 0, 0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+    #chatbox {
+        padding: 30px 10px;
+    }
+    #chatbox input {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+    }
+    #help ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    #incomingChatMessages {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    #incomingChatMessages li {
+        padding: 4px;
+    }
+
+    #incomingChatMessages li:nth-child(odd) {
+        background-color: #ccc;
+    }
+
+    #incomingChatMessages li:nth-child(even) {
+        background-color: #eee;
+    }
+
+    #outgoingChatMessage {
+        margin-top: 10px;
+    }
+
+    form.upload {
+        display: none;
+    }
+
+
+    @keyframes shake {
+      10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+      }
+      
+      20%, 80% {
+        transform: translate3d(2px, 0, 0);
+      }
+
+      30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+      }
+
+      40%, 60% {
+        transform: translate3d(4px, 0, 0);
+      }
+    }
+
+</style>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+    <script src="js/socket.io.min.js"></script>
+
+    <script>
+        (function() {
+            var SERVER = "http://localhost";
+            var PORT = 8000;
+            var NICK = "mrduck";
+            var CONNECTED = false;
+
+            $(function(){
+
+                var socket;
+                var lastmsg;
+                var $outgoing = $('#outgoingChatMessage');
+                var $incoming = $('#incomingChatMessages');
+                var $gear = $('.config-server');
+
+                var recentCommands = [];
+                var recentCommandOffset = 0;
+
+                function shake($el) {
+                    if (!$el instanceof jQuery) {
+                        $el = $(el);
+                    }
+                    $el.addClass('shake');
+                    setTimeout(function(){
+                        $el.removeClass('shake');
+                    }, 800);
+                }
+
+                $outgoing.keydown(function(event) {
+                    if(event.which == 38) {
+                        //up arrow
+                        if (recentCommandOffset > recentCommands.length - 1) return false;
+                        if (recentCommands.length) {
+                            $outgoing.val(recentCommands[recentCommands.length - 1 - recentCommandOffset]);
+                            recentCommandOffset++;
+                        }
+                        //$outgoing.focus().val($outgoing.val()); //force cursor to be at end of text input (may not be needed)
+                        return false;
+                    }
+                    else if (event.which == 40) {
+                        //down arrow
+                        if (recentCommandOffset < 1) return false;
+                        if (recentCommands.length) {
+                            $outgoing.val(recentCommands[recentCommands.length - recentCommandOffset + 1]);
+                            recentCommandOffset--;
+                        }
+                        return false;
+                    }
+                    else if(event.which == 13) {
+                        //enter
+                        event.preventDefault();
+
+                        if (!CONNECTED) {
+                            shake($gear);
+                            return;
+                        }
+
+                        var msg = $outgoing.val();
+
+                        if (msg === "") {
+                            shake($outgoing);
+                            return;
+                        }
+
+                        lastmsg = msg;
+                        recentCommands.push(lastmsg);
+                        recentCommandOffset = 0;
+
+                        console.log("sending " + msg);
+                        socket.emit('message',msg);
+                        $outgoing.val('');
+                    }
+                });
+
+                function handleError(msg) {
+                    console.log(msg);
+                    //$('#incomingChatMessages').append($('<li></li>')).text(msg);
+                    $incoming.append('<li>' + msg + '</li>');
+                }
+                function addToLog(data, err) {
+                    console.log('data', data, 'err' , err);
+                    $incoming.append('<li>' + data.msg + '</li>');
+                    if (err) { return }
+                    //only increase log count for successful commands
+                    $('.log-count').text(data.logCount);
+                }
+
+                function chooseNewNick(name) {
+                    NICK = prompt("Nickname Taken", "Please choose another nick. " + name + ' is taken!');
+                    //send new nickname to server
+                    socket.emit('nick', NICK);
+                }
+
+                function promptServerConfig() {
+                    SERVER = prompt("Server IP", "http://localhost") + ":" + PORT;
+                    bindEvents(); 
+                }
+
+                function bindEvents(){
+                    socket = io.connect(SERVER);
+                    socket.on('connection', function() {
+                        console.log('connected to server');
+                        $gear.css('color','green');
+                        CONNECTED = true;
+                        var name = 'mr duck';
+                        //send nickname to server
+                        socket.emit('nick', name);
+                    });
+                    socket.on('disconnect', function() {
+                        console.log('disconnected from server');
+                        $gear.css('color','black');
+                        CONNECTED = false;
+                    })
+                    socket.on('error', handleError);
+                    socket.on('cmdReceived', addToLog);
+                    socket.on('nickTaken', chooseNewNick);
+                }
+
+                $('.config-server').on('click', function(e) {
+                    console.log('config');
+                    e.preventDefault();
+                    promptServerConfig();
+                });
+
+                $('form.upload').submit(function(e) {
+                    var $this = $(this);
+                    e.preventDefault();
+                    var postUrl = $this.attr('action');
+                    $.post(postUrl, function(res) {
+                        console.log(res);
+                    })
+                });
+
+                //init
+                shake($gear);
+            });
+        }());
+    </script>
+
+</head>
+<body>
+    <h2 class="title">Chancer</h2>
+    <form action="http://localhost:8002/upload?key=12345" method="post" enctype="multipart/form-data" class="upload">
+        <input type="file" name="image" />
+        <input type="submit" value="Upload" />
+    </form>
+    <h3 class="sub">new york</h3>
+    <div id="settings">
+        <a class="config-server" href="#">
+            <i class="fa fa-2x fa-cog"></i>
+        </a>
+    </div>
+    <div id="chatbox">
+        <h3>log [<span class="log-count"></span>]</h3>
+        <ul id="incomingChatMessages"></ul>
+        <input type="text" id="outgoingChatMessage" onfocus="this.value = this.value;">
+    </div>
+    <div id="help">
+        <ul>
+            <li>x denotes number of sound to control (1-10)</li>
+            <li>/play x</li>
+            <li>/stop x</li>
+            <li>/loop x y [y denotes how many times to loop. If not provided, loop indefinitely</li>
+            <li>/vol x y [changes volume of sound x to y. y can be 0 to 100, with 100 being 100% volume</li>
+            <li>/pan x y [changes panning of sound x to y. y can be -100 to 100, with -100 being far left, and 100 being far right</li>
+        </ul>
+    </div>
+</body>
+</html>
