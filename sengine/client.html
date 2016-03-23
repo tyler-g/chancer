@@ -176,10 +176,14 @@
                     }
                 });
 
-                function showIncomingMessage(msg) {
+                function handleError(msg) {
                     console.log(msg);
                     //$('#incomingChatMessages').append($('<li></li>')).text(msg);
                     $('#incomingChatMessages').append('<li>' + msg + '</li>');
+                }
+                function addToLog(data) {
+                    $('#incomingChatMessages').append('<li>' + data.msg + '</li>');
+                    $('.log-count').text(data.logCount);
                 }
 
                 function chooseNewNick(name) {
@@ -208,7 +212,8 @@
                         $gear.css('color','black');
                         CONNECTED = false;
                     })
-                    socket.on('message', showIncomingMessage);
+                    socket.on('error', handleError);
+                    socket.on('cmdSuccess', addToLog);
                     socket.on('nickTaken', chooseNewNick);
                 }
 
@@ -247,7 +252,7 @@
         </a>
     </div>
     <div id="chatbox">
-        <h3>log</h3>
+        <h3>log [<span class="log-count"></span>]</h3>
         <ul id="incomingChatMessages"></ul>
         <input type="text" id="outgoingChatMessage" onfocus="this.value = this.value;">
     </div>

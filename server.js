@@ -10,9 +10,6 @@ var os = require('os');
 var path = require('path');
 var uuid = require('node-uuid');
 var fs = require('fs');
-var Busboy = require('busboy'); //for file upload server
-
-
 
 //app.get('/', function(req,res) {
     app.use(express.static('sengine'));
@@ -24,29 +21,6 @@ var server = http.createServer(app).listen(8000, function() {
 });
 var io = require('socket.io').listen(server);
 
-//server for client file upload
-http.createServer(function(req, res) {
-  if (req.method === 'POST') {
-    var busboy = new Busboy({ headers: req.headers });
-    busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-        var split = filename.split('.');
-        var ext = split[split.length - 1];
-        var tempFilename = uuid.v4({rng: uuid.mathRNG}) + '.' + ext;
-        var saveTo = path.join(__dirname, 'tmp', path.basename(tempFilename));
-        console.log(saveTo);
-        file.pipe(fs.createWriteStream(saveTo));
-    });
-    busboy.on('finish', function() {
-      res.writeHead(200, { 'Connection': 'close' });
-      res.end("That's all folks!");
-    });
-    return req.pipe(busboy);
-  }
-  res.writeHead(404);
-  res.end();
-}).listen(8002, function() {
-  console.log(clc.whiteBright.bgYellow("file upload server listening on port 8002..."));
-});
 
 //server for sound engine
 var sese = require('http').createServer(app).listen(8001, function() {
@@ -56,17 +30,9 @@ var iose = require('socket.io').listen(sese);
 
 //vars
 var clientCount = 0;
+var logCount = 0;
 var soundEngine; //this will hold the reference to the sound engine. Need to define here so it has proper scope.
 var soundEngineManifestLength = 0;
-
-global.VALID_COMMANDS = {
-    play    : true,
-    loop    : true,
-    stop    : true,
-    pause   : true,
-    vol     : true,
-    pan     : true
-}
 
 //nickname tracking
 var nicksDirMap = {}; //hash table
@@ -132,7 +98,10 @@ io.sockets.on('connection', function (client) {
 
             //only continue if sound id is valid
             if (result['id'] < 0) {
-                client.emit('message', "Server received your command [" + msg + "] , but the sound id is invalid (must be positive number)");
+                var data = {
+                    'msg' : 'Server received your command [' + msg + '] , but the sound id is invalid (must be positive number)'
+                }
+                client.emit('message', data);
                 return false;                
             }
             if (result['id'] > soundEngineManifestLength - 1) {
@@ -153,8 +122,8 @@ io.sockets.on('connection', function (client) {
                    if (result) {
                         //if sound played successfully, let the world know it happened
                         console.log("broadcasting " + msg);
-                        client.emit('message', msg);
-                        client.broadcast.send(msg);      
+                        //io emit sends to all clients including server
+                        io.emit('cmdSuccess', {'logCount': ++logCount, 'msg' : msg});
                     }              
                 }
             );
