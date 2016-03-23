@@ -16,14 +16,14 @@ var fs = require('fs');
 //})
 
 //server for clients
-var server = http.createServer(app).listen(8000, function() {
+var server = http.createServer(app).listen(global.PORTS["sclient"], function() {
     console.log(clc.whiteBright.bgCyan("client message server listening on port 8000..."));
 });
 var io = require('socket.io').listen(server);
 
 
 //server for sound engine
-var sese = require('http').createServer(app).listen(8001, function() {
+var sese = require('http').createServer(app).listen(global.PORTS["sengine"], function() {
     console.log(clc.whiteBright.bgBlack("sound engine server listening on port 8001..."));
 });
 var iose = require('socket.io').listen(sese);
@@ -95,17 +95,20 @@ io.sockets.on('connection', function (client) {
 
         if (typeof(result) !== 'boolean') {
         //only continue if command was valid
-
+            console.log(result);
             //only continue if sound id is valid
             if (result['id'] < 0) {
                 var data = {
                     'msg' : 'Server received your command [' + msg + '] , but the sound id is invalid (must be positive number)'
                 }
-                client.emit('message', data);
+                client.emit('cmdReceived', data, true);
                 return false;                
             }
             if (result['id'] > soundEngineManifestLength - 1) {
-                client.emit('message', "Server received your command [" + msg + "] , but the sound id is invalid");
+                var data = {
+                    'msg' : 'Server received your command [" + msg + "] , but the sound id is invalid'
+                }
+                client.emit('cmdReceived', data, true);
                 return false;
             }
 
@@ -123,7 +126,7 @@ io.sockets.on('connection', function (client) {
                         //if sound played successfully, let the world know it happened
                         console.log("broadcasting " + msg);
                         //io emit sends to all clients including server
-                        io.emit('cmdSuccess', {'logCount': ++logCount, 'msg' : msg});
+                        io.emit('cmdReceived', {'logCount': ++logCount, 'msg' : msg});
                     }              
                 }
             );
@@ -131,9 +134,9 @@ io.sockets.on('connection', function (client) {
     });
     client.on('disconnect', function(){
         console.log("client " + client.id + " disconnected");
-         nicksTaken[nicksDirMap[client.id]] = false;
-         nicksDirMap[client.id] = null;
-         updateNumClients(false);
+        nicksTaken[nicksDirMap[client.id]] = false;
+        nicksDirMap[client.id] = null;
+        updateNumClients(false);
     });
 
     updateNumClients(true);

@@ -115,6 +115,7 @@
                 var socket;
                 var lastmsg;
                 var $outgoing = $('#outgoingChatMessage');
+                var $incoming = $('#incomingChatMessages');
                 var $gear = $('.config-server');
 
                 var recentCommands = [];
@@ -159,7 +160,7 @@
                             return;
                         }
 
-                        var msg = $('#outgoingChatMessage').val();
+                        var msg = $outgoing.val();
 
                         if (msg === "") {
                             shake($outgoing);
@@ -172,17 +173,19 @@
 
                         console.log("sending " + msg);
                         socket.emit('message',msg);
-                        $('#outgoingChatMessage').val('');
+                        $outgoing.val('');
                     }
                 });
 
                 function handleError(msg) {
                     console.log(msg);
                     //$('#incomingChatMessages').append($('<li></li>')).text(msg);
-                    $('#incomingChatMessages').append('<li>' + msg + '</li>');
+                    $incoming.append('<li>' + msg + '</li>');
                 }
-                function addToLog(data) {
-                    $('#incomingChatMessages').append('<li>' + data.msg + '</li>');
+                function addToLog(data, err) {
+                    $incoming.append('<li>' + data.msg + '</li>');
+                    if (err) { return }
+                    //only increase log count for successful commands
                     $('.log-count').text(data.logCount);
                 }
 
@@ -213,7 +216,7 @@
                         CONNECTED = false;
                     })
                     socket.on('error', handleError);
-                    socket.on('cmdSuccess', addToLog);
+                    socket.on('cmdReceived', addToLog);
                     socket.on('nickTaken', chooseNewNick);
                 }
 

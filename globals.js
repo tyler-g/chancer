@@ -6,6 +6,10 @@ var Global = {
 	    pause   : true,
 	    vol     : true,
 	    pan     : true
+    },
+    PORTS : {
+    	sengine : 8001,
+    	sclient : 8000
     }
 };    
 module.exports = Global;
