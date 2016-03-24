@@ -11,34 +11,53 @@
 	function init() {
 
 		var assetsPath = "wav/";
+		var manifestLength = 9;
 
-		//manifest list of all sound files
+		//randomize the order assignment of sounds for the manifest
+		var randomWavNameMap = [];
+		var numbersUsed = [];
+		var count = 0;
+		var randomNum;
+		do {
+			do {
+				randomNum = Math.floor(Math.random() * manifestLength) + 1 //random # from 1 through manifestLength
+			}
+			while (typeof numbersUsed[randomNum] !== 'undefined');
+			numbersUsed[randomNum] = true;
+			randomWavNameMap.push(randomNum + '.wav');
+			count++;
+		}
+		while (count < manifestLength);
+
+		console.log(randomWavNameMap);
+
+		//set the manifest list of all sound files
 		manifest = [{
-			src: "1.wav",
+			src: randomWavNameMap[0],
 			id: 0
 		}, {
-			src: "2.wav",
+			src: randomWavNameMap[1],
 			id: 1
 		}, {
-			src: "3.wav",
+			src: randomWavNameMap[2],
 			id: 2
 		}, {
-			src: "4.wav",
+			src: randomWavNameMap[3],
 			id: 3
 		}, {
-			src: "5.wav",
+			src: randomWavNameMap[4],
 			id: 4
 		}, {
-			src: "6.wav",
+			src: randomWavNameMap[5],
 			id: 5
 		}, {
-			src: "7.wav",
+			src: randomWavNameMap[6],
 			id: 6
 		}, {
-			src: "8.wav",
+			src: randomWavNameMap[7],
 			id: 7
 		}, {
-			src: "9.wav",
+			src: randomWavNameMap[8],
 			id: 8
 		}];
 		// NOTE the "|" character is used by Sound to separate source into distinct files, which allows you to provide multiple extensions for wider browser support
