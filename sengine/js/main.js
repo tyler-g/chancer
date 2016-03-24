@@ -2,7 +2,7 @@
 
 	var debug = true;
 	var soundInstance = []; //master array of SoundInstance objects
-	var manifest; //master array of source wav files and their ids
+	var manifest = []; //master array of source wav files and their ids
 
 	if (!debug) {
 		console.log = function() {};
@@ -31,35 +31,15 @@
 
 		console.log(randomWavNameMap);
 
-		//set the manifest list of all sound files
-		manifest = [{
-			src: randomWavNameMap[0],
-			id: 0
-		}, {
-			src: randomWavNameMap[1],
-			id: 1
-		}, {
-			src: randomWavNameMap[2],
-			id: 2
-		}, {
-			src: randomWavNameMap[3],
-			id: 3
-		}, {
-			src: randomWavNameMap[4],
-			id: 4
-		}, {
-			src: randomWavNameMap[5],
-			id: 5
-		}, {
-			src: randomWavNameMap[6],
-			id: 6
-		}, {
-			src: randomWavNameMap[7],
-			id: 7
-		}, {
-			src: randomWavNameMap[8],
-			id: 8
-		}];
+		//populate the manifest
+		for (var i = 0; i < manifestLength; i++) {
+			var obj = {
+				'src' : randomWavNameMap[i],
+				id: i
+			}
+			manifest.push(obj);
+		};
+
 		// NOTE the "|" character is used by Sound to separate source into distinct files, which allows you to provide multiple extensions for wider browser support
 
 		createjs.Sound.alternateExtensions = ["mp3"]; // add other extensions to try loading if the src file extension is not supported
