@@ -14,31 +14,31 @@
 
 		//manifest list of all sound files
 		manifest = [{
-			src: "bell_knock_m.wav",
+			src: "1.wav",
 			id: 0
 		}, {
-			src: "creep_m.wav",
+			src: "2.wav",
 			id: 1
 		}, {
-			src: "knife_sharper_m.wav",
+			src: "3.wav",
 			id: 2
 		}, {
-			src: "sizzle_m.wav",
+			src: "4.wav",
 			id: 3
 		}, {
-			src: "sizzle2_m.wav",
+			src: "5.wav",
 			id: 4
 		}, {
-			src: "toaster_insert_m.wav",
+			src: "6.wav",
 			id: 5
 		}, {
-			src: "toaster_pop_m.wav",
+			src: "7.wav",
 			id: 6
 		}, {
-			src: "water1_m.wav",
+			src: "8.wav",
 			id: 7
 		}, {
-			src: "water2_m.wav",
+			src: "9.wav",
 			id: 8
 		}];
 		// NOTE the "|" character is used by Sound to separate source into distinct files, which allows you to provide multiple extensions for wider browser support
