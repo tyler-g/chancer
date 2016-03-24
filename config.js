@@ -1,4 +1,4 @@
-var Global = {
+var Config = {
     VALID_COMMANDS : { 
 	    play    : true,
 	    loop    : true,
@@ -12,4 +12,4 @@ var Global = {
     	sclient : 8000
     }
 };    
-module.exports = Global;
+module.exports = Config;

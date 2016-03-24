@@ -1,6 +1,6 @@
 //requires
-var global = require('./globals.js');
-var f = require('./functions.js');
+var config = require('./config.js');
+var f = require('./validation.js');
 var express = require('express'); 
 var clc = require('cli-color'); //pretty colors in the server logging
 
@@ -11,19 +11,18 @@ var path = require('path');
 var uuid = require('node-uuid');
 var fs = require('fs');
 
-//app.get('/', function(req,res) {
-    app.use(express.static('sengine'));
-//})
+app.use(express.static('sengine'));
+
 
 //server for clients
-var server = http.createServer(app).listen(global.PORTS["sclient"], function() {
+var server = http.createServer(app).listen(config.PORTS["sclient"], function() {
     console.log(clc.whiteBright.bgCyan("client message server listening on port 8000..."));
 });
 var io = require('socket.io').listen(server);
 
 
-//server for sound engine
-var sese = require('http').createServer(app).listen(global.PORTS["sengine"], function() {
+//server for sound engine (sengine)
+var sese = require('http').createServer(app).listen(config.PORTS["sengine"], function() {
     console.log(clc.whiteBright.bgBlack("sound engine server listening on port 8001..."));
 });
 var iose = require('socket.io').listen(sese);
@@ -31,32 +30,31 @@ var iose = require('socket.io').listen(sese);
 //vars
 var clientCount = 0;
 var logCount = 0;
-var soundEngine; //this will hold the reference to the sound engine. Need to define here so it has proper scope.
-var soundEngineManifestLength = 0;
-
+var sEngine; //this will hold the reference to the sound engine. Need to define here so it has proper scope.
+var sEngineManifestLength = 0;
 //nickname tracking
 var nicksDirMap = {}; //hash table
 var nicksTaken = {};
 
-//sound engine communication
+//sengine communication
 iose.sockets.on('connection', function (client) {
     console.log(clc.whiteBright.bgBlack("sound engine connected"));
     console.log(clc.whiteBright.bgBlack("sound engine socket id: " + client.id));
-    soundEngine = client;
+    sEngine = client;
 
-    soundEngine.on('disconnect', function (client) {
+    sEngine.on('disconnect', function (client) {
         console.log("sound engine disconnected");
-        soundEngine = undefined;
+        sEngine = undefined;
     });
 
-    soundEngine.on('message', function(data) {
+    sEngine.on('message', function(data) {
     //when the sound engine sends a message to here
         console.log("SENGINE says: " + data.msg);
     });
 
-    soundEngine.on('manifestUpdate', function(data) {
+    sEngine.on('manifestUpdate', function(data) {
         console.log("SENGINE says manifest length = " + data);
-        soundEngineManifestLength = data;
+        sEngineManifestLength = data;
     })
 });
 
@@ -83,7 +81,7 @@ io.sockets.on('connection', function (client) {
     client.on('message', function(msg) {
         //when any chat client sends a message to here
 
-        if (typeof(soundEngine) === 'undefined') {
+        if (typeof(sEngine) === 'undefined') {
             //sound engine is not connected. Let user know.
             console.log("command received from client, but sEngine is not connected");
             client.emit('message', "Server received your command [" + msg + "] , but the sound engine is not connected");
@@ -103,7 +101,7 @@ io.sockets.on('connection', function (client) {
                 client.emit('cmdReceived', data, true);
                 return false;                
             }
-            if (result['id'] > soundEngineManifestLength - 1) {
+            if (result['id'] > sEngineManifestLength - 1) {
                 var data = {
                     'msg' : 'Server received your command [' + msg + '] , but the sound id is invalid'
                 }
@@ -112,7 +110,7 @@ io.sockets.on('connection', function (client) {
             }
 
             //send command to sound engine
-            soundEngine.emit(
+            sEngine.emit(
                 'command', 
                 { 
                     cmd: result['cmd'],
@@ -141,11 +139,9 @@ io.sockets.on('connection', function (client) {
     updateNumClients(true);
 });
 
-//LOGGING
-function serverLog(type, msg) {
-
-}
-
+/* function to update the client count upon connect or disconnect
+     * @param   boolean connected (true if it was a connection, false if disconnect)
+*/
 function updateNumClients(connected) {
     if (connected) {
         clientCount ++;

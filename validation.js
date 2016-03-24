@@ -1,10 +1,13 @@
-var global = require('./globals.js');
+var config = require('./config.js');
 
 module.exports = function(){}; 
 
 module.exports.cmdCheck =
 
-//CHANCER FUNCTIONS
+/* function to parse out a command
+     * @param   string s (unparsed command string)
+     * @return  object || false
+*/
 function cmdCheck(s) {
 
     var cmdParsed = {}; //if s is a valid command string, let's get ready to return a nicely parsed object
@@ -30,7 +33,7 @@ function cmdCheck(s) {
     var sParsed = s.substr(1).split(" "); //parse out string (without first / char), space delimited
 
     //check command validity
-    if (global.VALID_COMMANDS[sParsed[0]] !== undefined) {
+    if (config.VALID_COMMANDS[sParsed[0]] !== undefined) {
         console.log("valid command");
     }
     else {
