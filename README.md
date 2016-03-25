@@ -2,10 +2,10 @@
 a project exploring the creation of chance music via user interaction
 
 ## setup
-<i>setup is based in 3 parts:</i><br>
-app.js | the nodejs server app that handles all command communication<br>
-client.html | a self-contained client that is used to connect to the server and send/receive commands<br>
-sengine/index.html | the sound engine which actually plays sounds in a browser
+setup is based in 3 parts:<br>
++ app.js | the nodejs server app that handles all command communication<br>
++ client.html | a self-contained client that is used to connect to the server and send/receive commands<br>
++ sengine/index.html | the sound engine which actually plays sounds in a browser
 
 To start chancer, first start the server app:<br>
 node app
