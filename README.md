@@ -24,6 +24,8 @@ chancer supports a command line interface. To send and receive commands, use the
 
 For the following supported commands, assume x is a number associated with a particular sound. The association is random at each startup of sEngine.
 
+The command line supports standard up/down arrow navigation through recently used commands.
+
 <pre><code>/play x</code></pre>
 play sound x 1 time
 <pre><code>/stop x</code></pre>
@@ -34,3 +36,20 @@ loop sound x, y times. If y is ommitted, loop infinitely.
 change the volume of sound x to y, which much be a value between 0 and 100, with 0 being 0% and 100 being 100% volume.
 <pre><code>/pan x y</code></pre>
 change the panning of sound x to y, which much be a value between -50 and 50, with -50 being hard left, and 50 being hard right.
+
+## troubleshooting
+
+#####node server app errors
+<pre><code>command received from client, but sEngine is not connected</code></pre>
+The server is receiving commands successfully from the client, but sEngine is not running. Simply open sengine/index.html in a browser window, and it will automatically connect to the server.
+
+#####client errors
+<pre><code>Server received your command [/play x] , but the sound id is invalid</code></pre>
+<pre><code>Server received your command [/play -x] , but the sound id is invalid (must be positive number)</code></pre>
+The server received the command as shown, but x is not a valid sound id.
+
+x cannot be negative nor can it be a number higher than the manifest length -1. The manifest length is shown on the server at the moment sEngine connects to the server. It will say something like "SENGINE says manifest length = 9"
+
+
+## logging
+Not yet supported, but will be the next major feature.
