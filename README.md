@@ -30,6 +30,8 @@ The command line supports standard up/down arrow navigation through recently use
 play sound x 1 time
 <pre><code>/stop x</code></pre>
 stop sound x and reset its position
+<pre><code>/pause x</code></pre>
+pause sound x without changing its position
 <pre><code>/loop x y</code></pre>
 loop sound x, y times. If y is ommitted, loop infinitely.
 <pre><code>/vol x y</code></pre>
