@@ -38,6 +38,8 @@ loop sound x, y times. If y is ommitted, loop infinitely.
 change the volume of sound x to y, which much be a value between 0 and 100, with 0 being 0% and 100 being 100% volume.
 <pre><code>/pan x y</code></pre>
 change the panning of sound x to y, which much be a value between -50 and 50, with -50 being hard left, and 50 being hard right.
+<pre><code>/filter x y</code></pre>
+change the filter frequency of sound x to frequency y, which much be a value between 0 and 22000 (hz). Currently only 'lowpass' filter is supported.
 
 ## troubleshooting
 
