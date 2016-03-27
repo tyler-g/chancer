@@ -3448,6 +3448,14 @@ this.createjs = this.createjs || {};
 		this.pan = null;
 
 		/**
+		 * The filter frequency (if supported), between 0 and 22000.
+		 * @property filterFrequency
+		 * @type {number}
+		 * @default null
+		 */
+		this.filterFrequency = null;
+
+		/**
 		 * Used to create an audio sprite (with duration), the initial offset to start playback and loop from, in milliseconds.
 		 * @property startTime
 		 * @type {number}
@@ -5420,6 +5428,21 @@ this.createjs = this.createjs || {};
 		});
 
 		/**
+		 * The filter frequency of the sound, between -1 (left) and 1 (right). Note that pan is not supported by HTML Audio.
+		 *
+		 * <br />Note in WebAudioPlugin this only gives us the "x" value of what is actually 3D audio.
+		 *
+		 * @property pan
+		 * @type {Number}
+		 * @default 0
+		 */
+		this._filterFrequency =  22000;
+		Object.defineProperty(this, "filterFrequency", {
+			get: this.getFilterFrequency,
+			set: this.setFilterFrequency
+		});
+
+		/**
 		 * Audio sprite property used to determine the starting offset.
 		 * @property startTime
 		 * @type {Number}
@@ -5794,6 +5817,32 @@ this.createjs = this.createjs || {};
 	 */
 	p.getPan = function () {
 		return this._pan;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/pan:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method setPan
+	 * @param {Number} value The pan value, between -1 (left) and 1 (right).
+	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
+	 */
+	p.setFilterFrequency = function (value) {
+		if(value == this._filterFrequency) { return this; }
+		this._filterFrequency = value;
+		this._updateFilter();
+		return this;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/pan:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method getPan
+	 * @return {Number} The value of the pan, between -1 (left) and 1 (right).
+	 */
+	p.getFilterFrequency = function () {
+		return this._filterFrequency;
 	};
 
 	/**
@@ -6626,6 +6675,12 @@ this.createjs = this.createjs || {};
 		this.sourceNode = null;
 
 
+		/**
+		 * added by tyler-g
+		*/
+		this.filterNode = s.context.createBiquadFilter();
+		this.filterNode.connect(this.panNode); //filter node => pan node => gain node
+
 // private properties
 		/**
 		 * Timeout that is created internally to handle sound playing to completion.
@@ -6725,13 +6780,17 @@ this.createjs = this.createjs || {};
 	p.toString = function () {
 		return "[WebAudioSoundInstance]";
 	};
-
+	
 
 // Private Methods
 	p._updatePan = function() {
 		this.panNode.setPosition(this._pan, 0, -0.5);
 		// z need to be -0.5 otherwise the sound only plays in left, right, or center
 	};
+
+	p._updateFilter = function () {
+		this.filterNode.frequency.value = this._filterFrequency;
+	}
 
 	p._removeLooping = function(value) {
 		this._sourceNodeNext = this._cleanUpAudioNode(this._sourceNodeNext);
@@ -6808,7 +6867,9 @@ this.createjs = this.createjs || {};
 	p._createAndPlayAudioNode = function(startTime, offset) {
 		var audioNode = s.context.createBufferSource();
 		audioNode.buffer = this.playbackResource;
-		audioNode.connect(this.panNode);
+		//audioNode.connect(this.panNode);
+		audioNode.connect(this.filterNode);
+
 		var dur = this._duration * 0.001;
 		audioNode.startTime = startTime + dur;
 		audioNode.start(audioNode.startTime, offset+(this._startTime*0.001), dur - offset);

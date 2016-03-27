@@ -2,6 +2,7 @@
 
 	var debug = true;
 	var soundInstance = []; //master array of SoundInstance objects
+	var soundInstanceCount = 0;
 	var manifest = []; //master array of source wav files and their ids
 
 	if (!debug) {
@@ -41,7 +42,7 @@
 		};
 
 		//createjs.Sound.alternateExtensions = ["mp3"]; // add other extensions to try loading if the src file extension is not supported
-		createjs.Sound.addEventListener("fileload", createjs.proxy(soundLoaded, this)); // add an event listener for when load is completed
+		createjs.Sound.on("fileload", soundLoaded);
 		createjs.Sound.registerPlugins([createjs.WebAudioPlugin, createjs.HTMLAudioPlugin]); //register plugins in order of precedence (webaudio preferred)
 		createjs.Sound.registerSounds(manifest, assetsPath);
 		console.log('audio plugin using:',createjs.Sound.activePlugin.__proto__.constructor.name);
@@ -59,6 +60,8 @@
 
 	function startServer() {
 		//all sound loaded, now we can start listening for commands
+		//soundInstance[0].filterFrequency = 1022;
+
 		var PORT = 8001;
 		var SERVER = "http://localhost:" + PORT;
 		var socket = io.connect(SERVER);
@@ -93,8 +96,8 @@
 
 	function soundLoaded(event) {
 		soundInstance[event.id] = createjs.Sound.createInstance(event.id);
-		//master = event.target.play(event.id, createjs.Sound.INTERRUPT_NONE, 0, 0, false, 1);
-		if (event.id < manifest.length - 1) return;
+		soundInstanceCount++;
+		if (soundInstanceCount < manifest.length ) return;
 		startServer();
 	}
 
@@ -131,6 +134,10 @@
 			case "pan":
 				if (typeof(val) === 'undefined') return false; //need value for pan command
 				return soundInstance[id].pan = (val / 100) * 2; //returns true [success] or false [failed]
+				
+			case "filter":
+				if (typeof(val) === 'undefined') return false; //need value for filter command
+				return soundInstance[id].filterFrequency = val;
 				return;
 
 			default:

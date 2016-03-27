@@ -5,7 +5,8 @@ var Config = {
 	    stop    : true,
 	    pause   : true,
 	    vol     : true,
-	    pan     : true
+	    pan     : true,
+	    filter  : true
     },
     PORTS : {
     	sengine : 8001,
