@@ -29,7 +29,7 @@
 		}
 		while (count < manifestLength);
 
-		console.log(randomWavNameMap);
+		console.log('randomized manifest:', randomWavNameMap);
 
 		//populate the manifest
 		for (var i = 0; i < manifestLength; i++) {
@@ -40,13 +40,11 @@
 			manifest.push(obj);
 		};
 
-		// NOTE the "|" character is used by Sound to separate source into distinct files, which allows you to provide multiple extensions for wider browser support
-
-		createjs.Sound.alternateExtensions = ["mp3"]; // add other extensions to try loading if the src file extension is not supported
-
+		//createjs.Sound.alternateExtensions = ["mp3"]; // add other extensions to try loading if the src file extension is not supported
 		createjs.Sound.addEventListener("fileload", createjs.proxy(soundLoaded, this)); // add an event listener for when load is completed
-
-		createjs.Sound.registerManifest(manifest, assetsPath);
+		createjs.Sound.registerPlugins([createjs.WebAudioPlugin, createjs.HTMLAudioPlugin]); //register plugins in order of precedence (webaudio preferred)
+		createjs.Sound.registerSounds(manifest, assetsPath);
+		console.log('audio plugin using:',createjs.Sound.activePlugin.__proto__.constructor.name);
 
 		//jquery - move this to proper place
 		$(function() {
@@ -70,8 +68,11 @@
 			socket.emit("manifestUpdate", soundInstance.length);
 		});
 		socket.on('command', function(data, cb) {
-			console.log(data);
-			if (soundDo(data["cmd"], data["id"], data["val"]) === false) {
+			console.log('received command:', data);
+
+			var sd = soundDo(data["cmd"], data["id"], data["val"]);
+				console.log(sd);
+			if (sd === false) {
 				//if it returned false, it failed. Let server know
 				socket.emit("message", {
 					type: 'error',
@@ -118,7 +119,7 @@
 				return;
 
 			case "pause":
-				return soundInstance[id].pause(); //returns true[ success] or false [sound isn't currently playing]
+				return soundInstance[id].paused = true; //returns true[ success] or false [sound isn't currently playing]
 
 			case "stop":
 				return soundInstance[id].stop(); //returns true [success] or false [failed]
