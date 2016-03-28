@@ -3448,7 +3448,7 @@ this.createjs = this.createjs || {};
 		this.pan = null;
 
 		/**
-		 * The filter frequency (if supported), between 0 and 22000.
+		 * The filter frequency (if supported), between 0 and half the sample rate.
 		 * @property filterFrequency
 		 * @type {number}
 		 * @default null
@@ -5428,13 +5428,10 @@ this.createjs = this.createjs || {};
 		});
 
 		/**
-		 * The filter frequency of the sound, between -1 (left) and 1 (right). Note that pan is not supported by HTML Audio.
-		 *
-		 * <br />Note in WebAudioPlugin this only gives us the "x" value of what is actually 3D audio.
-		 *
-		 * @property pan
+		 * The filter frequency of the sound, between 0 and half the sample rate. Note that pan is not supported by HTML Audio.
+		 * @property filterFrequency
 		 * @type {Number}
-		 * @default 0
+		 * @default 22050
 		 */
 		this._filterFrequency =  22050;
 		Object.defineProperty(this, "filterFrequency", {
@@ -6680,6 +6677,7 @@ this.createjs = this.createjs || {};
 		*/
 		this.filterNode = s.context.createBiquadFilter();
 		this.filterNode.connect(this.panNode); //filter node => pan node => gain node
+		this._updateFilter();
 
 // private properties
 		/**
