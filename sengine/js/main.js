@@ -60,8 +60,6 @@
 
 	function startServer() {
 		//all sound loaded, now we can start listening for commands
-		//soundInstance[0].filterFrequency = 1022;
-
 		var PORT = 8001;
 		var SERVER = "http://localhost:" + PORT;
 		var socket = io.connect(SERVER);

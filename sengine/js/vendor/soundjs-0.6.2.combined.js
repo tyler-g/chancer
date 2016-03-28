@@ -5436,7 +5436,7 @@ this.createjs = this.createjs || {};
 		 * @type {Number}
 		 * @default 0
 		 */
-		this._filterFrequency =  22000;
+		this._filterFrequency =  22050;
 		Object.defineProperty(this, "filterFrequency", {
 			get: this.getFilterFrequency,
 			set: this.setFilterFrequency
