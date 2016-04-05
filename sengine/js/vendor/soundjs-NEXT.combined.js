@@ -49,7 +49,7 @@ this.createjs = this.createjs || {};
 	 * @type String
 	 * @static
 	 **/
-	s.version = /*=version*/"0.6.2"; // injected by build process
+	s.version = /*=version*/"NEXT"; // injected by build process
 
 	/**
 	 * The build date for this release in UTC format.
@@ -57,7 +57,7 @@ this.createjs = this.createjs || {};
 	 * @type String
 	 * @static
 	 **/
-	s.buildDate = /*=date*/"Thu, 26 Nov 2015 20:44:31 GMT"; // injected by build process
+	s.buildDate = /*=date*/"Tue, 05 Apr 2016 15:54:08 GMT"; // injected by build process
 
 })();
 
@@ -2861,7 +2861,7 @@ this.createjs = this.createjs || {};
 		try {
 			if (!this._item.values || this._item.method == createjs.AbstractLoader.GET) {
 				this._request.send();
-			} else if (this._item.method == createjs.AbstractLoader.POST) {
+			} else {
 				this._request.send(createjs.RequestUtils.formatQueryString(this._item.values));
 			}
 		} catch (error) {
@@ -3026,29 +3026,26 @@ this.createjs = this.createjs || {};
 	 */
 	p._handleTimeout = function (event) {
 		this._clean();
-
 		this.dispatchEvent(new createjs.ErrorEvent("PRELOAD_TIMEOUT", null, event));
 	};
 
 // Protected
 	/**
 	 * Determine if there is an error in the current load. This checks the status of the request for problem codes. Note
-	 * that this does not check for an actual response. Currently, it only checks for 404 or 0 error code.
+	 * that this does not check for an actual response. Currently, it only checks for error codes between 400 and 599
 	 * @method _checkError
 	 * @return {int} If the request status returns an error code.
 	 * @private
 	 */
 	p._checkError = function () {
-		//LM: Probably need additional handlers here, maybe 501
 		var status = parseInt(this._request.status);
-
-		switch (status) {
-			case 404:   // Not Found
-			case 0:     // Not Loaded
-				return new Error(status);
+		if (status >= 400 && status <= 599) {
+			return new Error(status);
+		} else {
+			return null;
 		}
-		return null;
 	};
+
 
 	/**
 	 * Validate the response. Different browsers have different approaches, some of which throw errors when accessed
@@ -3446,14 +3443,6 @@ this.createjs = this.createjs || {};
 		 * @default null
 		 */
 		this.pan = null;
-
-		/**
-		 * The filter frequency (if supported), between 0 and half the sample rate.
-		 * @property filterFrequency
-		 * @type {number}
-		 * @default null
-		 */
-		this.filterFrequency = null;
 
 		/**
 		 * Used to create an audio sprite (with duration), the initial offset to start playback and loop from, in milliseconds.
@@ -4414,7 +4403,7 @@ this.createjs = this.createjs || {};
 		loadItem = createjs.LoadItem.create(loadItem);
 		loadItem.path = basePath;
 
-		if (basePath != null && !(loadItem.src instanceof Object)) {loadItem.src = basePath + src;}
+		if (basePath != null && !(loadItem.src instanceof Object)) {loadItem.src = basePath + loadItem.src;}
 
 		var loader = s._registerSound(loadItem);
 		if(!loader) {return false;}
@@ -4445,7 +4434,7 @@ this.createjs = this.createjs || {};
 	 *          {src:"asset0.ogg", id:"example"},
 	 *          {src:"asset1.ogg", id:"1", data:6},
 	 *          {src:"asset2.mp3", id:"works"}
-	 *          {src:{mp3:"path1/asset3.mp3", ogg:"path2/asset3NoExtension}, id:"better"}
+	 *          {src:{mp3:"path1/asset3.mp3", ogg:"path2/asset3NoExtension"}, id:"better"}
 	 *      ];
 	 *      createjs.Sound.alternateExtensions = ["mp3"];	// if the passed extension is not supported, try this extension
 	 *      createjs.Sound.on("fileload", handleLoad); // call handleLoad when each sound loads
@@ -5428,7 +5417,8 @@ this.createjs = this.createjs || {};
 		});
 
 		/**
-		 * The filter frequency of the sound, between 0 and half the sample rate. Note that pan is not supported by HTML Audio.
+		 * The filter frequency of the sound, between 0 and half the sample rate. Note that filter is not supported by HTML Audio.
+		 *
 		 * @property filterFrequency
 		 * @type {Number}
 		 * @default 22050
@@ -5437,6 +5427,72 @@ this.createjs = this.createjs || {};
 		Object.defineProperty(this, "filterFrequency", {
 			get: this.getFilterFrequency,
 			set: this.setFilterFrequency
+		});
+
+		/**
+		 * The filter quality factor of the sound, between 0.0001 and 1000. Note that filter is not supported by HTML Audio.
+		 *
+		 * @property filterFrequency
+		 * @type {Number}
+		 * @default 1
+		 */
+		this._filterQ =  1;
+		Object.defineProperty(this, "filterQ", {
+			get: this.getFilterQ,
+			set: this.setFilterQ
+		});
+
+		/**
+		 * The filter type, one of the following: "lowpass" "highpass" bandpass". Note that filter is not supported by HTML Audio.
+		 *
+		 * @property filterType
+		 * @type {String}
+		 * @default "lowpass"
+		 */
+		this._filterType =  "lowpass";
+		Object.defineProperty(this, "filterType", {
+			get: this.getFilterType,
+			set: this.setFilterType
+		});
+
+		/**
+		 * The filter detune value in cents. Note that filter is not supported by HTML Audio.
+		 *
+		 * @property filterDetune
+		 * @type {Number}
+		 * @default 0
+		 */
+		this._filterDetune =  0;
+		Object.defineProperty(this, "filterDetune", {
+			get: this.getFilterDetune,
+			set: this.setFilterDetune
+		});
+
+		/**
+		 * The distortion value in amount. Note that distortion is not supported by HTML Audio.
+		 *
+		 * @property distortionAmount
+		 * @type {Number}
+		 * @default 0
+		 */
+		this._distortionAmount =  0;
+		Object.defineProperty(this, "distortionAmount", {
+			get: this.getDistortionAmount,
+			set: this.setDistortionAmount
+		});
+
+		/**
+		 * The convolver buffer to use on the convolver node. This can be an audioBuffer or a filepath, and will be handled appropriately depending on which.
+		 * Note that convolver is not supported by HTML Audio.
+		 *
+		 * @property convolverBuffer
+		 * @type {String} || {AudioBuffer}
+		 * @default null
+		 */
+		this._convolverBuffer =  null;
+		Object.defineProperty(this, "convolverBuffer", {
+			get: this.getConvolverBuffer,
+			set: this.setConvolverBuffer
 		});
 
 		/**
@@ -5817,11 +5873,11 @@ this.createjs = this.createjs || {};
 	};
 
 	/**
-	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/pan:property"}}{{/crossLink}} directly as a property
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterFrequency:property"}}{{/crossLink}} directly as a property
 	 *
 	 * @deprecated
-	 * @method setPan
-	 * @param {Number} value The pan value, between -1 (left) and 1 (right).
+	 * @method setFilterFrequency
+	 * @param {Number} value The filter frequency value, between 0 and half the sample rate.
 	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
 	 */
 	p.setFilterFrequency = function (value) {
@@ -5832,15 +5888,168 @@ this.createjs = this.createjs || {};
 	};
 
 	/**
-	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/pan:property"}}{{/crossLink}} directly as a property
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterFrequency:property"}}{{/crossLink}} directly as a property
 	 *
 	 * @deprecated
-	 * @method getPan
-	 * @return {Number} The value of the pan, between -1 (left) and 1 (right).
+	 * @method getFilterFrequency
+	 * @return {Number} The value of the filter frequency, between 0 and half the sample rate.
 	 */
 	p.getFilterFrequency = function () {
 		return this._filterFrequency;
 	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterQ:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method setFilterQ
+	 * @param {Number} value The filter quality factor, between 0.0001 and 1000.
+	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
+	 */
+	p.setFilterQ = function (value) {
+		if(value == this._filterQ) { return this; }
+		this._filterQ = value;
+		this._updateFilter();
+		return this;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterQ:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method getFilterQ
+	 * @return {Number} The value of the filter frequency, between 0.0001 and 1000.
+	 */
+	p.getFilterQ = function () {
+		return this._filterQ;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterType:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method setFilterType
+	 * @param {String} The filter type, one of the following: "lowpass" "highpass" bandpass".
+	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
+	 */
+	p.setFilterType = function (value) {
+		if(value == this._filterType) { return this; }
+
+		var acceptedTypes = {
+			"lowpass" : true,
+			"highpass" : true,
+			"bandpass" : true
+		};
+
+		if (typeof acceptedTypes[value] === 'undefined') { return false; }
+
+		this._filterType = value;
+		this._updateFilter();
+		return this;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterType:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method getFilterType
+	 * @return {String} The filter type, one of the following: "lowpass" "highpass" bandpass".
+	 */
+	p.getFilterType = function () {
+		return this._filterType;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterDetune:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method setFilterDetune
+	 * @param {Number} The filter detune value in cents.
+	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
+	 */
+	p.setFilterDetune = function (value) {
+		if(value == this._filterDetune) { return this; }
+
+		this._filterDetune= value;
+		this._updateFilter();
+		return this;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/filterDetune:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method getFilterDetune
+	 * @return {Number} The filter detune value in cents.
+	 */
+	p.getFilterDetune = function () {
+		return this._filterDetune;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/distortionAmount:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method setDistortionAmount
+	 * @param {Number} The distortion value in amount.
+	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
+	 */
+	p.setDistortionAmount = function (value) {
+		if(value == this._distortionAmount) { return this; }
+
+		this._distortionAmount = value;
+		this._updateDistortion();
+		return this;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/distortionAmount:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method getDistortionAmount
+	 * @return {Number} The distortion value in amount.
+	 */
+	p.getDistortionAmount = function () {
+		return this._distortionAmount;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/convolverBuffer:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method setConvolverBuffer
+	 * @param {String} The filepath to an impulse response WAV || {AudioBuffer} The audio buffer to use as the convoler's buffer.
+	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
+	 */
+	p.setConvolverBuffer = function (buffer) {
+		if (typeof buffer === 'string') {
+			//if a filepath is passed, must import it as an arraybuffer and decode
+			this._getConvolverBufferFromFilepath(buffer);
+		}
+		else {
+			if (typeof AudioBuffer !== 'undefined' && buffer instanceof AudioBuffer) {
+				//audio buffer is passed, set it directly
+				this._convolverBuffer = buffer;
+				this._updateConvolver();
+			}
+			else {
+				return false;
+			}
+		}
+		return this;
+	};
+
+	/**
+	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/convolverBuffer:property"}}{{/crossLink}} directly as a property
+	 *
+	 * @deprecated
+	 * @method getConvolverBuffer
+	 * @return {AudioBuffer} The audio buffer being used as the convolver's buffer.
+	 */
+	p.getConvolverBuffer = function () {
+		return this._convolverBuffer;
+	};
+
 
 	/**
 	 * DEPRECATED, please use {{#crossLink "AbstractSoundInstance/position:property"}}{{/crossLink}} directly as a property
@@ -6663,6 +6872,37 @@ this.createjs = this.createjs || {};
 
 		/**
 		 * NOTE this is only intended for use by advanced users.
+		 * <br />A  ConvolverNode allowing application of convolver buffers (e.g. reverb) Connected to WebAudioSoundInstance {{#crossLink "WebAudioSoundInstance/panNode:property"}}{{/crossLink}}.
+		 * @property  convolverNode
+		 * @type { ConvolverNode}
+		 * @since 0.6.?
+		 */
+		this.convolverNode = s.context.createConvolver();
+		this.convolverNode.buffer = this.testBuffer;
+		this.convolverNode.connect(this.panNode); //convolver node => pan node => gain node
+
+		/**
+		 * NOTE this is only intended for use by advanced users.
+		 * <br />A filterNode allowing frequency filtering. Connected to WebAudioSoundInstance {{#crossLink "WebAudioSoundInstance/convolverNode:property"}}{{/crossLink}}.
+		 * @property filterNode
+		 * @type {BiquadFilterNode}
+		 * @since 0.6.?
+		 */
+		this.filterNode = s.context.createBiquadFilter();
+		this.filterNode.connect(this.convolverNode); //filter node => convolver node => pan node => gain node
+
+		/**
+		 * NOTE this is only intended for use by advanced users.
+		 * <br />A waveShaperNode allowing application of disortion curves. Connected to WebAudioSoundInstance {{#crossLink "WebAudioSoundInstance/filterNode:property"}}{{/crossLink}}.
+		 * @property distortionNode
+		 * @type {WaveShaperNode}
+		 * @since 0.6.?
+		 */
+		this.distortionNode = s.context.createWaveShaper();
+		this.distortionNode.connect(this.filterNode); //distortion node => filter node => convolver node => pan node => gain node
+
+		/**
+		 * NOTE this is only intended for use by advanced users.
 		 * <br />sourceNode is the audio source. Connected to WebAudioSoundInstance {{#crossLink "WebAudioSoundInstance/panNode:property"}}{{/crossLink}}.
 		 * @property sourceNode
 		 * @type {AudioNode}
@@ -6671,13 +6911,6 @@ this.createjs = this.createjs || {};
 		 */
 		this.sourceNode = null;
 
-
-		/**
-		 * added by tyler-g
-		*/
-		this.filterNode = s.context.createBiquadFilter();
-		this.filterNode.connect(this.panNode); //filter node => pan node => gain node
-		this._updateFilter();
 
 // private properties
 		/**
@@ -6778,7 +7011,7 @@ this.createjs = this.createjs || {};
 	p.toString = function () {
 		return "[WebAudioSoundInstance]";
 	};
-	
+
 
 // Private Methods
 	p._updatePan = function() {
@@ -6786,9 +7019,54 @@ this.createjs = this.createjs || {};
 		// z need to be -0.5 otherwise the sound only plays in left, right, or center
 	};
 
-	p._updateFilter = function () {
+	p._updateFilter = function() {
 		this.filterNode.frequency.value = this._filterFrequency;
-	}
+		this.filterNode.Q.value = this._filterQ;
+		this.filterNode.type = this._filterType;
+		this.filterNode.detune.value = this._filterDetune;
+	};
+
+	// distortion curve for the waveshaper, thanks to Kevin Ennis
+	// http://stackoverflow.com/questions/22312841/waveshaper-node-in-webaudio-how-to-emulate-distortion
+	p._makeDistortionCurve = function(amount) {
+	    var k = typeof amount === 'number' ? amount : 50;
+	    var n_samples = 44100;
+	    var curve = new Float32Array(n_samples);
+	    var deg = Math.PI / 180;
+	    var i = 0;
+	    var x;
+	    for ( ; i < n_samples; ++i ) {
+	    	x = i * 2 / n_samples - 1;
+	    	curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
+	    }
+	    return curve;		
+	};
+
+	p._updateDistortion = function() {
+		this.distortionNode.oversample = '4x'; //pull this out into a config.  Can be 'none', '2x' or '4x'
+		this.distortionNode.curve = this._makeDistortionCurve(this._distortionAmount);
+	};
+
+	p._updateConvolver = function() {
+		this.convolverNode.buffer = this._convolverBuffer;
+	};
+
+	p._getConvolverBufferFromFilepath = function(filepath) {
+		// grab audio track via XHR for convolver node
+		var req = new XMLHttpRequest();
+		req.open('GET', filepath, true);
+		req.responseType = 'arraybuffer';
+
+		var self = this; //save this reference
+		req.onload = function() {
+		  var audioData = req.response;
+		  s.context.decodeAudioData(audioData, function(buffer) {
+		  	self._convolverBuffer = buffer;
+		  	self._updateConvolver();
+		    }, function(e){"Error with decoding audio data" + e.err});
+		}
+		req.send();
+	};
 
 	p._removeLooping = function(value) {
 		this._sourceNodeNext = this._cleanUpAudioNode(this._sourceNodeNext);
@@ -6865,9 +7143,16 @@ this.createjs = this.createjs || {};
 	p._createAndPlayAudioNode = function(startTime, offset) {
 		var audioNode = s.context.createBufferSource();
 		audioNode.buffer = this.playbackResource;
-		//audioNode.connect(this.panNode);
-		audioNode.connect(this.filterNode);
+		audioNode.connect(this.distortionNode);
 
+		//don't allow convolverNode in the change if it's buffer is null
+		if (this.convolverNode.buffer === null) {
+			console.warn('convolverNode has a null buffer and will not output any audio. SoundJS will now temporarily bypass the convolver to allow for audio playback.');
+			//this.filterNode.disconnect();
+			//this.convolverNode.disconnect();
+			this.filterNode.connect(this.panNode);
+			
+		}
 		var dur = this._duration * 0.001;
 		audioNode.startTime = startTime + dur;
 		audioNode.start(audioNode.startTime, offset+(this._startTime*0.001), dur - offset);
